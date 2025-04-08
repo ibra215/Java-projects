@@ -1,0 +1,5 @@
+
+Car,Toyota,Corolla,2018,true
+Motorcycle,Honda,CBR500R,2020,true
+Car,Ford,Mustang,2017,false
+Motorcycle,Yamaha,YZF-R3,2021,true
