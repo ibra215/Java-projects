@@ -1,0 +1,227 @@
+import java.io.*;
+import java.util.*;
+
+// واجهة التحقق من المخزون
+interface Stockable {
+    boolean checkStock();
+}
+
+// الكلاس الأب لكل المنتجات
+class Product {
+    private String name;
+    private double price;
+    private int quantity;
+
+    public Product() {}
+
+    public Product(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    // Getters and setters
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
+
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public String toString() {
+        return "Name: " + name + ", Price: " + price + ", Quantity: " + quantity;
+    }
+}
+
+// كلاس Book يرث من Product ويطبق الواجهة
+class Book extends Product implements Stockable {
+    private String author;
+
+    public Book() {}
+
+    public Book(String name, double price, int quantity, String author) {
+        super(name, price, quantity);
+        this.author = author;
+    }
+
+    public String getAuthor() { return author; }
+    public void setAuthor(String author) { this.author = author; }
+
+    @Override
+    public boolean checkStock() {
+        return getQuantity() > 0;
+    }
+
+    @Override
+    public String toString() {
+        return "[Book] " + super.toString() + ", Author: " + author;
+    }
+}
+
+// كلاس Electronic يرث من Product ويطبق الواجهة
+class Electronic extends Product implements Stockable {
+    private String brand;
+
+    public Electronic() {}
+
+    public Electronic(String name, double price, int quantity, String brand) {
+        super(name, price, quantity);
+        this.brand = brand;
+    }
+
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) { this.brand = brand; }
+
+    @Override
+    public boolean checkStock() {
+        return getQuantity() > 0;
+    }
+
+    @Override
+    public String toString() {
+        return "[Electronic] " + super.toString() + ", Brand: " + brand;
+    }
+}
+
+// كلاس مجرد لإدارة المنتجات
+abstract class Manager {
+    protected ArrayList<Product> products = new ArrayList<>();
+
+    public void addProduct(Product p) {
+        products.add(p);
+    }
+
+    public void displayAll() {
+        for (Product p : products) {
+            System.out.println(p);
+        }
+    }
+
+    public Product findProduct(String name) {
+        for (Product p : products) {
+            if (p.getName().equalsIgnoreCase(name)) {
+                return p;
+            }
+        }
+        return null;
+    }
+}
+
+// كلاس واقعي يرث من Manager
+class StoreManager extends Manager {
+    public StoreManager() {
+        loadFromFile();
+    }
+
+    public void saveToFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("products.txt"))) {
+            for (Product p : products) {
+                if (p instanceof Book) {
+                    Book b = (Book) p;
+                    writer.write("Book," + b.getName() + "," + b.getPrice() + "," + b.getQuantity() + "," + b.getAuthor());
+                } else if (p instanceof Electronic) {
+                    Electronic e = (Electronic) p;
+                    writer.write("Electronic," + e.getName() + "," + e.getPrice() + "," + e.getQuantity() + "," + e.getBrand());
+                }
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error writing to file.");
+        }
+    }
+
+    public void loadFromFile() {
+        File file = new File("products.txt");
+        if (!file.exists()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                String type = parts[0];
+                String name = parts[1];
+                double price = Double.parseDouble(parts[2]);
+                int quantity = Integer.parseInt(parts[3]);
+
+                if (type.equals("Book")) {
+                    String author = parts[4];
+                    addProduct(new Book(name, price, quantity, author));
+                } else if (type.equals("Electronic")) {
+                    String brand = parts[4];
+                    addProduct(new Electronic(name, price, quantity, brand));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading from file.");
+        }
+    }
+}
+
+// Main class لتشغيل البرنامج
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        StoreManager manager = new StoreManager();
+
+        while (true) {
+            System.out.println("\n1. Add Product\n2. View All\n3. Search\n4. Save & Exit");
+            System.out.print("Choose: ");
+            int choice = sc.nextInt();
+            sc.nextLine();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Type (Book/Electronic): ");
+                    String type = sc.nextLine();
+
+                    System.out.print("Name: ");
+                    String name = sc.nextLine();
+
+                    System.out.print("Price: ");
+                    double price = sc.nextDouble();
+
+                    System.out.print("Quantity: ");
+                    int quantity = sc.nextInt();
+                    sc.nextLine();
+
+                    if (type.equalsIgnoreCase("Book")) {
+                        System.out.print("Author: ");
+                        String author = sc.nextLine();
+                        manager.addProduct(new Book(name, price, quantity, author));
+                    } else if (type.equalsIgnoreCase("Electronic")) {
+                        System.out.print("Brand: ");
+                        String brand = sc.nextLine();
+                        manager.addProduct(new Electronic(name, price, quantity, brand));
+                    } else {
+                        System.out.println("Invalid type.");
+                    }
+                    break;
+
+                case 2:
+                    manager.displayAll();
+                    break;
+
+                case 3:
+                    System.out.print("Enter product name to search: ");
+                    String searchName = sc.nextLine();
+                    Product found = manager.findProduct(searchName);
+                    if (found != null) {
+                        System.out.println("Found: " + found);
+                    } else {
+                        System.out.println("Not found.");
+                    }
+                    break;
+
+                case 4:
+                    manager.saveToFile();
+                    System.out.println("Saved. Bye!");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice.");
+            }
+        }
+    }
+}
