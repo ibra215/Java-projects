@@ -1,0 +1,93 @@
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+import javafx.geometry.Insets;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class MainApp extends Application {
+
+    private StoreManager manager = new StoreManager();
+
+    @Override
+    public void start(Stage primaryStage) {
+        // إعداد بعض بيانات الاختبار
+        manager.addProduct(new Book("Java Programming", 50.0, 10, "John Doe"));
+        manager.addProduct(new Electronic("Laptop", 1500.0, 5, "HP"));
+
+        // بناء مكونات النافذة الأولى
+        Label label = new Label("مرحبا بك في إدارة المتجر");
+        Button showProductsBtn = new Button("عرض المنتجات في وحدة التحكم");
+        Button openSecondStageBtn = new Button("فتح النافذة الثانية");
+        Label imageLabel = new Label("مثال على صورة:");
+
+        // مثال على وضع صورة في الواجهة (تأكد من وجود صورة في المسار المحدد)
+        Image image = new Image("file:sample.png"); // ضع اسم الملف الصحيح للصورة
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(120);
+        imageView.setFitHeight(120);
+        imageView.setPreserveRatio(true);
+
+        // حدث عند الضغط على زر عرض المنتجات
+        showProductsBtn.setOnAction(e -> {
+            manager.displayAll();
+        });
+
+        // حدث عند الضغط على زر النافذة الثانية
+        openSecondStageBtn.setOnAction(e -> {
+            openSecondStage();
+        });
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(15));
+        vbox.getChildren().addAll(label, showProductsBtn, openSecondStageBtn, imageLabel, imageView);
+
+        Scene scene = new Scene(vbox, 400, 300);
+        primaryStage.setTitle("النافذة الأولى");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void openSecondStage() {
+        Stage secondStage = new Stage();
+        Label fileLabel = new Label("محتوى الملف:");
+        TextArea fileContentArea = new TextArea();
+        fileContentArea.setEditable(false);
+
+        // زر لقراءة الملف
+        Button readFileBtn = new Button("قراءة الملف data.txt");
+        readFileBtn.setOnAction(e -> {
+            // قراءة محتوى الملف
+            try (BufferedReader br = new BufferedReader(new FileReader("data.txt"))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+                fileContentArea.setText(sb.toString());
+            } catch (IOException ex) {
+                // معالجة الاستثناء
+                fileContentArea.setText("حدث خطأ أثناء قراءة الملف: " + ex.getMessage());
+            }
+        });
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(15));
+        vbox.getChildren().addAll(fileLabel, fileContentArea, readFileBtn);
+
+        Scene scene = new Scene(vbox, 400, 300);
+        secondStage.setTitle("النافذة الثانية");
+        secondStage.setScene(scene);
+        secondStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
